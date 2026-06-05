@@ -1,54 +1,54 @@
 # rs-flow-contexts
 
-Repozytorium kontekstów rs-flow + **provisioning nowych repozytoriów przez GitHub Actions**.
+rs-flow context repository + **provisioning of new repositories via GitHub Actions**.
 
-## Tworzenie repozytoriów z plików `.md`
+## Create repositories from `.md` files
 
-Action [`Create repositories`](.github/workflows/create-repos.yml) tworzy repo w
-organizacji `Rocksoft-IT` na podstawie plików w [`repo-requests/`](repo-requests/).
-Jeden plik `.md` = jedno repo; dane bierzemy z frontmattera YAML.
+The [`Create repositories`](.github/workflows/create-repos.yml) action creates repos in
+the `Rocksoft-IT` organization based on the files in [`repo-requests/`](repo-requests/).
+One `.md` file = one repo; the data comes from the YAML frontmatter.
 
 ```
 repo-requests/
-├── _TEMPLATE.md            ← szablon (ignorowany przez Action)
-├── warsztat-samochodowy.md ← przykładowy request
-scripts/create-repos.mjs    ← logika (gh CLI + js-yaml)
+├── _TEMPLATE.md            ← template (ignored by the action)
+├── warsztat-samochodowy.md ← example request
+scripts/create-repos.mjs    ← logic (gh CLI + js-yaml)
 .github/workflows/create-repos.yml
 ```
 
-### Uruchomienie
+### Running it
 
-**Actions → Create repositories → Run workflow.** Inputy:
-- `dry_run` — gdy `true`, nic nie tworzy, tylko pokazuje plan (zacznij od tego),
-- `only_file` — opcjonalnie ogranicz do jednego pliku.
+**Actions → Create repositories → Run workflow.** Inputs:
+- `dry_run` — when `true`, creates nothing and just prints the plan (start here),
+- `only_file` — optionally limit to a single file.
 
-Szczegóły formatu: [`repo-requests/README.md`](repo-requests/README.md).
+Format details: [`repo-requests/README.md`](repo-requests/README.md).
 
-### Wymagana autoryzacja (ważne)
+### Required authorization (important)
 
-Domyślny `GITHUB_TOKEN` **nie może** tworzyć repo w organizacji. Action używa
-sekretu **`ORG_REPO_TOKEN`**. Ustaw go w *Settings → Secrets and variables →
+The default `GITHUB_TOKEN` **cannot** create repositories in an organization. The action
+uses the **`ORG_REPO_TOKEN`** secret. Set it under *Settings → Secrets and variables →
 Actions*:
 
-- **MVP (najszybciej):** classic **PAT** ze scope **`repo`**, z konta które ma
-  prawo tworzyć repozytoria w `Rocksoft-IT`.
-- **Docelowo:** **GitHub App** z uprawnieniem *Administration: write* na org;
-  token mintowany w workflow (`actions/create-github-app-token`) zamiast PAT
-  człowieka — wąski zakres, rotowalny, bez tokenu w czyimś profilu.
+- **MVP (fastest):** a classic **PAT** with the **`repo`** scope, from an account allowed
+  to create repositories in `Rocksoft-IT`.
+- **Long term:** a **GitHub App** with the *Administration: write* permission on the org;
+  mint the token inside the workflow (`actions/create-github-app-token`) instead of a
+  human PAT — narrow scope, rotatable, not tied to anyone's profile.
 
-## Dane testowe
+## Test data
 
-Katalog [`context/`](context/) zawiera przykładowy pakiet kontekstu rs-flow
-(discovery / foundation / prd / changes) projektu "Warsztat samochodowy".
-Służy jako realne dane do testów (request `repo-requests/warsztat-samochodowy.md`
-jest z niego wyprowadzony).
+The [`context/`](context/) directory contains a sample rs-flow context package
+(discovery / foundation / prd / changes) for the "Warsztat samochodowy" project.
+It serves as real test data (the `repo-requests/warsztat-samochodowy.md` request is
+derived from it).
 
-## Lokalne uruchomienie
+## Running locally
 
 ```bash
 npm install
-# podgląd bez tworzenia:
+# preview without creating anything:
 GH_TOKEN=$(gh auth token) DRY_RUN=true node scripts/create-repos.mjs
-# realne tworzenie:
+# real creation:
 GH_TOKEN=$(gh auth token) node scripts/create-repos.mjs
 ```
