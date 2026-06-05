@@ -1,0 +1,13 @@
+{
+  "name": "rs-flow-contexts-tooling",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Tooling to provision repositories from repo-requests/*.md",
+  "scripts": {
+    "create-repos": "node scripts/create-repos.mjs"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.0"
+  }
+}

@@ -1,0 +1,46 @@
+name: Create repositories
+
+# Tworzy repozytoria w organizacji na podstawie plików repo-requests/*.md.
+# Uruchamiane RĘCZNIE z zakładki Actions (Run workflow).
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run — nie twórz repo, tylko pokaż co by powstało"
+        type: boolean
+        default: false
+      only_file:
+        description: "Opcjonalnie: jeden plik z repo-requests/ (np. warsztat-samochodowy.md)"
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: create-repos
+  cancel-in-progress: false
+
+jobs:
+  create:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install deps
+        run: npm install --no-audit --no-fund
+
+      - name: Create repositories
+        env:
+          # Token z prawem tworzenia repo w organizacji.
+          # MVP: classic PAT (scope `repo`). Docelowo: token z GitHub App.
+          GH_TOKEN: ${{ secrets.ORG_REPO_TOKEN }}
+          TARGET_ORG: Rocksoft-IT
+          REQUESTS_DIR: repo-requests
+          DRY_RUN: ${{ inputs.dry_run }}
+          ONLY_FILE: ${{ inputs.only_file }}
+        run: node scripts/create-repos.mjs
