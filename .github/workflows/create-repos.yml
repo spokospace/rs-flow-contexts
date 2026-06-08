@@ -13,6 +13,10 @@ on:
         description: "Opcjonalnie: jeden plik z repo-requests/ (np. warsztat-samochodowy.md)"
         type: string
         default: ""
+      target_org:
+        description: "Docelowa organizacja GitHub (domyślnie Rocksoft-IT). Dla klienta podaj jego org i ustaw secret CLIENT_REPO_TOKEN."
+        type: string
+        default: "Rocksoft-IT"
 
 permissions:
   contents: read
@@ -38,8 +42,8 @@ jobs:
         env:
           # Token z prawem tworzenia repo w organizacji.
           # MVP: classic PAT (scope `repo`). Docelowo: token z GitHub App.
-          GH_TOKEN: ${{ secrets.ORG_REPO_TOKEN }}
-          TARGET_ORG: Rocksoft-IT
+          GH_TOKEN: ${{ secrets.CLIENT_REPO_TOKEN || secrets.ORG_REPO_TOKEN }}
+          TARGET_ORG: ${{ inputs.target_org || 'Rocksoft-IT' }}
           REQUESTS_DIR: repo-requests
           DRY_RUN: ${{ inputs.dry_run }}
           ONLY_FILE: ${{ inputs.only_file }}

@@ -1,34 +1,53 @@
 #!/usr/bin/env node
 // Tworzy repozytoria w organizacji na podstawie plików `repo-requests/*.md`.
 //
-// Każdy plik = jedno repo. Dane repo bierzemy z frontmattera YAML (zgodnego
-// z konwencją rs-flow: `project`, `context_type`, `product_type`, ...).
-// Operacja jest IDEMPOTENTNA — jeśli repo już istnieje, plik jest pomijany,
-// więc workflow można bezpiecznie uruchamiać wielokrotnie.
+// Dwa tryby:
+//   FILE MODE  — domyślny; przetwarza pliki z REQUESTS_DIR.
+//   CLI MODE   — podaj --name, pomija repo-requests/.
 //
-// Autoryzacja: używa `gh` CLI, który czyta token z env `GH_TOKEN`.
-//   - MVP: classic PAT ze scope `repo` (konto z prawem tworzenia repo w org).
-//   - Docelowo: token z GitHub App (Administration: write) mintowany w workflow.
-//
-// Env:
+// Env (file mode):
 //   GH_TOKEN     – token (wymagany, chyba że DRY_RUN=true)
-//   TARGET_ORG   – organizacja docelowa (domyślnie Rocksoft-IT)
+//   TARGET_ORG   – org docelowa (domyślnie Rocksoft-IT)
 //   REQUESTS_DIR – katalog z plikami request (domyślnie repo-requests)
 //   DRY_RUN      – "true" => nic nie tworzy, tylko raportuje
 //   ONLY_FILE    – opcjonalnie: jeden plik (np. warsztat-samochodowy.md)
+//
+// CLI mode:
+//   node create-repos.mjs --name <repo> [--org <org>] [--token <pat>]
+//     [--description "..."] [--visibility private|public|internal]
+//     [--context-path <dir>] [--topics "a,b,c"] [--dry-run]
 
 import { readdirSync, readFileSync, appendFileSync, rmSync, cpSync, existsSync } from 'node:fs';
 import { join, basename } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
+import { parseArgs } from 'node:util';
 import yaml from 'js-yaml';
 
-const ORG = process.env.TARGET_ORG || 'Rocksoft-IT';
+const { values: cli } = parseArgs({
+  strict: false,
+  options: {
+    name:           { type: 'string' },
+    org:            { type: 'string' },
+    token:          { type: 'string' },
+    description:    { type: 'string', default: '' },
+    visibility:     { type: 'string', default: 'private' },
+    'context-path': { type: 'string', default: '' },
+    topics:         { type: 'string', default: '' },
+    'dry-run':      { type: 'boolean', default: false },
+  },
+});
+
+const CLI_MODE = Boolean(cli.name);
+
+if (cli.token) process.env.GH_TOKEN = cli.token;
+
+const ORG          = cli.org || process.env.TARGET_ORG || 'Rocksoft-IT';
 const RS_SKILLS_URL = 'https://github.com/Rocksoft-IT/rs-skills';
 const RS_SKILLS_PATH = '.claude/skills';
 const REQUESTS_DIR = process.env.REQUESTS_DIR || 'repo-requests';
-const DRY_RUN = String(process.env.DRY_RUN || '').toLowerCase() === 'true';
-const ONLY_FILE = (process.env.ONLY_FILE || '').trim();
+const DRY_RUN      = cli['dry-run'] || String(process.env.DRY_RUN || '').toLowerCase() === 'true';
+const ONLY_FILE    = (process.env.ONLY_FILE || '').trim();
 
 const VALID_VISIBILITY = new Set(['private', 'public', 'internal']);
 
@@ -105,7 +124,47 @@ function repoExists(fullName) {
   }
 }
 
-// --- zbierz pliki-requesty -------------------------------------------------
+// --- CLI MODE: --name podane, pomijamy repo-requests/ ----------------------
+if (CLI_MODE) {
+  const name = slugify(cli.name);
+  if (!name || !/^[a-z0-9._-]+$/.test(name)) {
+    console.error(`Niepoprawna nazwa repo: "${cli.name}"`);
+    process.exit(1);
+  }
+  const visibility = cli.visibility.toLowerCase();
+  if (!VALID_VISIBILITY.has(visibility)) {
+    console.error(`visibility="${visibility}" — dozwolone: private|public|internal`);
+    process.exit(1);
+  }
+  const fullName   = `${ORG}/${name}`;
+  const topics     = cli.topics ? cli.topics.split(',').map((t) => slugify(t.trim())).filter(Boolean) : [];
+  const contextPath = cli['context-path'];
+
+  console.log(`Org: ${ORG} | repo: ${name} | dry-run: ${DRY_RUN}`);
+
+  if (repoExists(fullName)) {
+    console.log(`= ${fullName} — już istnieje`);
+    process.exit(0);
+  }
+  if (DRY_RUN) {
+    console.log(`+ ${fullName} — [dry-run] utworzyłbym (${visibility})`);
+    process.exit(0);
+  }
+
+  const createArgs = ['repo', 'create', fullName, `--${visibility}`];
+  if (cli.description) createArgs.push('--description', cli.description);
+  run(createArgs);
+  if (topics.length) {
+    const editArgs = ['repo', 'edit', fullName];
+    for (const t of topics) editArgs.push('--add-topic', t);
+    run(editArgs);
+  }
+  initRepo(fullName, contextPath);
+  console.log(`+ ${fullName} — utworzone (${visibility})${topics.length ? `, topics: ${topics.join(', ')}` : ''}`);
+  process.exit(0);
+}
+
+// --- FILE MODE: zbierz pliki-requesty --------------------------------------
 let files;
 try {
   files = readdirSync(REQUESTS_DIR, { withFileTypes: true })

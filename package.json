@@ -5,7 +5,8 @@
   "type": "module",
   "description": "Tooling to provision repositories from repo-requests/*.md",
   "scripts": {
-    "create-repos": "node scripts/create-repos.mjs"
+    "create-repos": "node scripts/create-repos.mjs",
+    "create-repo": "node scripts/create-repos.mjs"
   },
   "dependencies": {
     "js-yaml": "^4.1.0"
