@@ -71,6 +71,15 @@ The Guest's visible inputs are the scanned table (which fixes the table number) 
 - **Order** — a set of menu items submitted by a Guest, bound to a Table, with a status.
 - **Menu item** — a product (e.g. coffee) with name, price, category, and availability.
 
+## Dependencies
+- FR-002 blocked-by FR-001
+- FR-003 blocked-by FR-002
+- FR-004 blocked-by FR-003
+- FR-007 blocked-by FR-006, FR-004
+- FR-008 blocked-by FR-007
+- FR-009 blocked-by FR-006
+- FR-010 blocked-by FR-005, FR-006
+
 ## Open Questions
 - Multi-location support and whether the QR encodes location + table.
 - Whether item availability ever needs scheduling rather than a manual sold-out toggle.
