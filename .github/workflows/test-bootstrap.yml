@@ -1,0 +1,53 @@
+name: "[TEST] Bootstrap issues from discovery notes"
+
+# Test workflow — runs against a discovery notes file in this repo.
+# Creates issues here in rs-flow-contexts (not in a project repo).
+# Use this to verify claude-code-action + ANTHROPIC_API_KEY works before
+# pushing bootstrap.yml to real project repos.
+
+on:
+  workflow_dispatch:
+    inputs:
+      context_file:
+        description: "Path to discovery-notes.md (relative to repo root)"
+        required: true
+        default: "2026-06-05-meniu-qr-self-funded-startup/context/foundation/discovery-notes.md"
+      dry_run:
+        description: "Dry run — print what would be created, no issues/branches"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  test-bootstrap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          allowed_tools: "Bash,Read,Glob"
+          prompt: |
+            Read the file `${{ inputs.context_file }}`.
+
+            Dry run mode: ${{ inputs.dry_run }}
+
+            For every Functional Requirement listed (lines matching `- FR-XXX:`):
+
+            If dry run is TRUE:
+              - Print a table of issues that WOULD be created (FR id, title, priority).
+              - Do not run any gh or git commands.
+
+            If dry run is FALSE:
+              1. Check for duplicates: `gh issue list --label enhancement --json title`
+              2. For each FR not already present, create a GitHub Issue:
+                 `gh issue create --title "[FR-XXX] <title>" --body "<description and priority>" --label enhancement`
+              3. After creating the issue, create a branch:
+                 `git checkout -b feature/FR-XXX && git push origin feature/FR-XXX`
+              4. Print a summary table of created issues and branches.
+
+            Use the project glossary for consistent terminology.
