@@ -17,12 +17,15 @@
 //   DRY_RUN      – "true" => nic nie tworzy, tylko raportuje
 //   ONLY_FILE    – opcjonalnie: jeden plik (np. warsztat-samochodowy.md)
 
-import { readdirSync, readFileSync, appendFileSync } from 'node:fs';
+import { readdirSync, readFileSync, appendFileSync, rmSync, cpSync, existsSync } from 'node:fs';
 import { join, basename } from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
 import yaml from 'js-yaml';
 
 const ORG = process.env.TARGET_ORG || 'Rocksoft-IT';
+const RS_SKILLS_URL = 'https://github.com/Rocksoft-IT/rs-skills';
+const RS_SKILLS_PATH = '.claude/skills';
 const REQUESTS_DIR = process.env.REQUESTS_DIR || 'repo-requests';
 const DRY_RUN = String(process.env.DRY_RUN || '').toLowerCase() === 'true';
 const ONLY_FILE = (process.env.ONLY_FILE || '').trim();
@@ -54,6 +57,43 @@ function run(args) {
   // stderr 'pipe' (nie 'inherit'), żeby błędy gh nie zaśmiecały logu —
   // obsługujemy je przez wyjątek tam, gdzie to istotne.
   return execFileSync('gh', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+}
+
+function git(args, cwd) {
+  return execFileSync('git', args, {
+    encoding: 'utf8',
+    cwd,
+    env: { ...process.env, GIT_TERMINAL_PROMPT: '0' },
+    stdio: ['ignore', 'pipe', 'pipe'],
+  }).trim();
+}
+
+function initRepo(fullName, contextPath) {
+  const token = process.env.GH_TOKEN || '';
+  const tmpDir = join(tmpdir(), `rs-new-${Date.now()}`);
+  try {
+    git(['clone', '--quiet', `https://x-access-token:${token}@github.com/${fullName}.git`, tmpDir]);
+    git(['config', 'user.email', 'github-actions@github.com'], tmpDir);
+    git(['config', 'user.name', 'GitHub Actions'], tmpDir);
+    git(['submodule', 'add', '--quiet', RS_SKILLS_URL, RS_SKILLS_PATH], tmpDir);
+
+    if (contextPath) {
+      const srcDir = join(process.cwd(), contextPath);
+      if (existsSync(srcDir)) {
+        cpSync(srcDir, join(tmpDir, 'context'), { recursive: true });
+        console.log(`  → context copied from "${contextPath}"`);
+      } else {
+        console.warn(`  → context_path "${contextPath}" nie istnieje — pomijam`);
+      }
+    }
+
+    git(['add', '.'], tmpDir);
+    git(['commit', '--quiet', '-m', contextPath ? 'chore: init — rs-skills + context' : 'chore: init — rs-skills'], tmpDir);
+    git(['push', '--quiet'], tmpDir);
+    console.log(`  → pushed`);
+  } finally {
+    rmSync(tmpDir, { recursive: true, force: true });
+  }
 }
 
 function repoExists(fullName) {
@@ -141,6 +181,8 @@ for (const file of files) {
       for (const t of topics) editArgs.push('--add-topic', t);
       run(editArgs);
     }
+
+    initRepo(fullName, fm.context_path ? String(fm.context_path).trim() : '');
 
     console.log(`+ ${fullName} — utworzone (${visibility})${topics.length ? `, topics: ${topics.join(', ')}` : ''}`);
     results.push({ file, repo: fullName, status: 'created', detail: visibility });
