@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI-Driven Project Scaffolding</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/black.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/monokai.css">
+  <style>
+    :root {
+      --rs-orange: #e07b39;
+      --rs-dim: #aaa;
+    }
+    .reveal h1, .reveal h2 { color: #fff; }
+    .reveal h3 { color: var(--rs-orange); }
+    .reveal .subtitle { color: var(--rs-dim); font-size: 0.7em; margin-top: 0.5em; }
+    .reveal .label { background: var(--rs-orange); color: #111; padding: 2px 10px; border-radius: 4px; font-size: 0.65em; font-weight: bold; vertical-align: middle; }
+    .reveal table { font-size: 0.65em; }
+    .reveal table th { background: #333; }
+    .reveal table td, .reveal table th { border: 1px solid #444; padding: 6px 12px; }
+    .reveal .ok   { color: #4ec94e; }
+    .reveal .warn { color: #f0b429; }
+    .reveal .bad  { color: #e05252; }
+    .reveal .flow {
+      font-family: monospace;
+      font-size: 0.62em;
+      background: #1e1e1e;
+      padding: 1em 1.5em;
+      border-radius: 8px;
+      text-align: left;
+      line-height: 1.7;
+      color: #ccc;
+    }
+    .reveal .flow .hl { color: var(--rs-orange); }
+    .reveal pre code { max-height: 420px; }
+    .reveal ul li { margin-bottom: 0.35em; }
+    .reveal .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5em; text-align: left; }
+    .reveal .card { background: #1e1e1e; border-radius: 8px; padding: 0.8em 1.2em; font-size: 0.7em; }
+    .reveal .card h4 { color: var(--rs-orange); margin: 0 0 0.4em; font-size: 1.1em; }
+    .reveal .sources { font-size: 0.45em; color: #888; margin-top: 1.5em; }
+    .reveal .sources a { color: #aaa; }
+  </style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+<!-- 1. TITLE -->
+<section>
+  <h1 style="font-size:1.6em">AI-Driven<br>Project Scaffolding</h1>
+  <p class="subtitle">From discovery to first commit — automated</p>
+  <p class="subtitle" style="margin-top:2em">Rocksoft-IT · 2026</p>
+</section>
+
+<!-- 2. PROBLEM -->
+<section>
+  <h2>The problem</h2>
+  <ul>
+    <li>Every new project starts with 6–8 identical manual steps</li>
+    <li>Discovery notes, repo creation, context setup, issue backlog — done by hand every time</li>
+    <li>Context lives in someone's head or a random Notion page</li>
+    <li>Onboarding a second dev takes longer than it should</li>
+  </ul>
+</section>
+
+<!-- 3. FULL FLOW -->
+<section>
+  <h2>The full flow</h2>
+  <div class="flow">
+    <span class="hl">n8n</span><br>
+    &nbsp;└─ generates discovery notes (.md)<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ <span class="hl">rs-flow-contexts</span> (GitHub repo)<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ repo-request .md added<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ <span class="hl">create-repos.yml</span> (GitHub Action)<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├─ gh repo create<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├─ git submodule add rs-skills → <span class="hl">.claude/skills/</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├─ copies <span class="hl">context/</span> into new repo<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ pushes bootstrap.yml workflow<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ [trigger] <span class="hl">claude-code-action</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├─ reads discovery-notes.md<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├─ creates GitHub Issues (FR-001…)<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ creates feature branches
+  </div>
+</section>
+
+<!-- 4. RS-FLOW-CONTEXTS -->
+<section>
+  <h2>rs-flow-contexts</h2>
+  <p style="font-size:0.75em;color:#aaa">The control plane for all project repos</p>
+  <ul style="font-size:0.8em">
+    <li>One <code>.md</code> file = one repo request</li>
+    <li>Frontmatter drives everything: name, visibility, topics, <code>context_path</code></li>
+    <li>Idempotent — safe to re-run, existing repos are skipped</li>
+    <li>n8n writes context → dev adds a <code>.md</code> → Action runs</li>
+  </ul>
+  <pre><code class="yaml" data-trim>
+repo: meniu-qr
+description: QR table-ordering web app for cafés
+visibility: private
+context_path: 2026-06-05-meniu-qr-self-funded-startup/context
+topics: [rs-flow, discovery, greenfield, web-app]
+  </code></pre>
+</section>
+
+<!-- 5. RS-SKILLS -->
+<section>
+  <h2>rs-skills</h2>
+  <p style="font-size:0.75em;color:#aaa">Claude Code as a dev tool — local workflow</p>
+  <ul style="font-size:0.8em">
+    <li>Set of slash commands for Claude Code CLI</li>
+    <li>Installed as a <strong>git submodule</strong> at <code>.claude/skills/</code> in every project repo</li>
+    <li>Available from the first clone — no manual setup</li>
+  </ul>
+  <br>
+  <div class="two-col" style="font-size:0.72em">
+    <div>
+      <strong style="color:var(--rs-orange)">/rs-init</strong> — scaffold context/<br>
+      <strong style="color:var(--rs-orange)">/rs-shape</strong> — structure the idea<br>
+      <strong style="color:var(--rs-orange)">/rs-prd</strong> — write the PRD<br>
+      <strong style="color:var(--rs-orange)">/rs-roadmap</strong> — sequence delivery
+    </div>
+    <div>
+      <strong style="color:var(--rs-orange)">/rs-plan</strong> — plan a feature<br>
+      <strong style="color:var(--rs-orange)">/rs-implement</strong> — implement it<br>
+      <strong style="color:var(--rs-orange)">/rs-impl_review</strong> — review code<br>
+      <strong style="color:var(--rs-orange)">/rs-archive</strong> — close the change
+    </div>
+  </div>
+  <br>
+  <p style="font-size:0.65em;color:#aaa">Works with a <strong>claude.ai Pro/Max subscription</strong> — no API key needed locally</p>
+</section>
+
+<!-- 6. CLAUDE-CODE-ACTION -->
+<section>
+  <h2>claude-code-action</h2>
+  <p style="font-size:0.75em;color:#aaa">Claude Code running inside GitHub Actions</p>
+  <ul style="font-size:0.8em">
+    <li><code>anthropics/claude-code-action@v1</code> — 7 900+ stars, production-ready</li>
+    <li>Reads the repo, creates issues, writes code, opens PRs</li>
+    <li>Trigger options: <code>workflow_dispatch</code>, label, <code>@claude</code> in a comment</li>
+    <li>Workflow file pushed automatically during provisioning</li>
+    <li>Org-level secret <code>ANTHROPIC_API_KEY</code> → zero per-repo config</li>
+  </ul>
+  <pre><code class="yaml" data-trim>
+- uses: anthropics/claude-code-action@v1
+  with:
+    anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+    prompt: |
+      Read context/foundation/discovery-notes.md.
+      For every FR-XXX create a GitHub Issue + branch feature/FR-XXX.
+  </code></pre>
+</section>
+
+<!-- 7. ALTERNATIVES FOR ISSUE CREATION -->
+<section>
+  <h2>Alternatives: issues from .md</h2>
+  <div style="font-size:0.62em">
+    <table>
+      <thead>
+        <tr>
+          <th>Tool</th>
+          <th>How</th>
+          <th>AI needed?</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>claude-code-action</strong></td>
+          <td>Claude reads spec, creates issues intelligently</td>
+          <td class="ok">Claude (API)</td>
+          <td class="ok">✅ GA</td>
+        </tr>
+        <tr>
+          <td><strong>gh-issue-creator</strong></td>
+          <td>CLI: accepts .md or JSON, one command, dry-run default</td>
+          <td class="ok">No</td>
+          <td class="ok">✅ GA</td>
+        </tr>
+        <tr>
+          <td><strong>GitHub Agentic Workflows</strong></td>
+          <td>Workflows in Markdown, Copilot executes</td>
+          <td class="warn">Copilot</td>
+          <td class="warn">⚠️ Preview</td>
+        </tr>
+        <tr>
+          <td><strong>GitHub Models in Actions</strong></td>
+          <td>Smaller AI models built into Actions, no external key</td>
+          <td class="warn">GitHub models</td>
+          <td class="ok">✅ GA</td>
+        </tr>
+        <tr>
+          <td><strong>Linear AI agents</strong></td>
+          <td>Native PRD → issues, 75% enterprise workspaces</td>
+          <td class="ok">Native</td>
+          <td class="bad">Migration required</td>
+        </tr>
+        <tr>
+          <td><strong>Claude Routines</strong></td>
+          <td>Scheduled remote Claude Code agent</td>
+          <td class="ok">Claude</td>
+          <td class="bad">5–25 runs/day cap</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="sources">
+    Sources:
+    <a href="https://github.blog/changelog/2026-02-13-github-agentic-workflows-are-now-in-technical-preview/">GitHub Agentic Workflows</a> ·
+    <a href="https://dev.to/lfariaus/how-i-keep-llms-on-a-tight-leash-and-stopped-hand-creating-30-github-issues-in-the-process-52go">gh-issue-creator (DEV.to)</a> ·
+    <a href="https://www.theregister.com/2026/03/26/linear_agent/">Linear agents</a>
+  </p>
+</section>
+
+<!-- 8. API VS SUBSCRIPTION -->
+<section>
+  <h2>API vs subscription</h2>
+  <p style="font-size:0.7em;color:#aaa">Honest trade-off</p>
+  <div style="font-size:0.6em">
+    <table>
+      <thead>
+        <tr><th></th><th>claude.ai subscription<br><small>(Routines)</small></th><th>Anthropic API</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Local dev (rs-skills, CLI)</td><td class="ok">✅ Pro/Max works</td><td class="ok">✅ also works</td></tr>
+        <tr><td>GitHub Actions (claude-code-action)</td><td class="bad">❌ no browser auth on runner</td><td class="ok">✅ required</td></tr>
+        <tr><td>Automated runs / day</td><td class="warn">⚠️ 5 (Pro) / 15 (Max) / 25 (Team)</td><td class="ok">✅ unlimited</td></tr>
+        <tr><td>Min. schedule interval</td><td class="warn">⚠️ 1 hour</td><td class="ok">✅ event-driven</td></tr>
+        <tr><td>Cost per bootstrap run</td><td>—</td><td class="ok">~$0.01</td></tr>
+        <tr><td>Who manages it</td><td>individual devs</td><td class="ok">one org API key</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="font-size:0.6em;margin-top:0.8em">
+    <strong>Bottom line:</strong> local work runs on subscription.
+    CI/automation needs API — one org-level key, shared across all repos, negligible cost.
+  </p>
+  <p class="sources">
+    Source: <a href="https://code.claude.com/docs/en/routines">Automate work with routines — Claude Code Docs</a>
+  </p>
+</section>
+
+<!-- 9. WHAT WE GAIN -->
+<section>
+  <h2>What we gain</h2>
+  <ul>
+    <li>New project: from idea to issues + branches in <strong>&lt; 5 minutes</strong></li>
+    <li>Context always lives in the repo (<code>context/</code>), not in someone's head</li>
+    <li>Consistent structure across every project → easier onboarding</li>
+    <li>rs-skills available to every dev from the first clone</li>
+    <li>Reproducible — the same Action can run again after spec changes</li>
+  </ul>
+</section>
+
+<!-- 10. WHAT'S NEXT -->
+<section>
+  <h2>What's next</h2>
+  <ul>
+    <li>Auto-trigger bootstrap after <code>create-repos.yml</code> completes — zero manual step</li>
+    <li><code>/rs-impl_review</code> in PRs — Claude reviews before human review</li>
+    <li>Extend n8n → auto-create repo-request after client intake form</li>
+    <li>Evaluate <strong>GitHub Agentic Workflows</strong> once out of preview</li>
+  </ul>
+</section>
+
+<!-- 11. THANK YOU -->
+<section>
+  <h2>Thank you</h2>
+  <p class="subtitle">Repo: <code>Rocksoft-IT/rs-flow-contexts</code></p>
+  <p class="subtitle">Skills: <code>Rocksoft-IT/rs-skills</code></p>
+  <p class="subtitle">Action: <code>anthropics/claude-code-action</code></p>
+</section>
+
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/notes/notes.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true,
+    slideNumber: 'c/t',
+    transition: 'slide',
+    plugins: [ RevealHighlight, RevealNotes ]
+  });
+</script>
+</body>
+</html>
