@@ -41,7 +41,10 @@ while ((m = FR_LINE.exec(raw)) !== null) {
     priority = hit[1].trim();
     title    = title.replace(hit[0], '').replace(/\.$/, '').trim();
   }
-  requirements.push({ id: m[1].trim(), title, priority });
+  const nextLine = raw.slice(m.index + m[0].length + 1).split('\n')[0];
+  const accMatch = nextLine.match(/^\s+[-*]\s+\*\*Acceptance:\*\*\s+(.+)/);
+  const acceptance = accMatch ? accMatch[1].trim() : '';
+  requirements.push({ id: m[1].trim(), title, priority, acceptance });
 }
 
 if (requirements.length === 0) {
@@ -88,7 +91,8 @@ const results = [];
 
 for (const req of requirements) {
   const issueTitle = `[${req.id}] ${req.title}`;
-  const issueBody  = `**Requirement:** ${req.id}\n\n${req.title}\n\n**Priority:** ${req.priority}`;
+  const acceptanceLine = req.acceptance ? `\n\n**Acceptance:** ${req.acceptance}` : '';
+  const issueBody  = `**Requirement:** ${req.id}\n\n${req.title}\n\n**Priority:** ${req.priority}${acceptanceLine}`;
 
   if (existingIssues.has(issueTitle)) {
     const num = existingIssues.get(issueTitle);
