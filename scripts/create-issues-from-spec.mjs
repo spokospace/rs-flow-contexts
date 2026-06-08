@@ -23,17 +23,26 @@ const REPO    = (process.env.REPO || '').trim();
 
 const raw = readFileSync(specFile, 'utf8');
 
-// Match lines like:  - FR-001: Guest can scan ... Priority: must-have
-const FR_LINE = /^[-*]\s+(FR-\d+):\s+(.+?)(?:\s+Priority:\s*(.+))?$/gm;
+// Match lines like:
+//   - FR-001: Guest can scan ... Priority: must-have
+//   - FR-001: Klient może złożyć zamówienie ... must-have
+const FR_LINE = /^[-*]\s+(FR-\d+):\s+(.+)$/gm;
+const PRIORITY_LABEL  = /\s+Priority:\s*(.+?)\s*$/i;
+const PRIORITY_INLINE = /[.\s]+(must-have|should-have|nice-to-have|could-have)\s*$/i;
 
 const requirements = [];
 let m;
 while ((m = FR_LINE.exec(raw)) !== null) {
-  requirements.push({
-    id:       m[1].trim(),
-    title:    m[2].trim(),
-    priority: (m[3] || 'unspecified').trim(),
-  });
+  let title    = m[2].trim();
+  let priority = 'unspecified';
+
+  const hit = title.match(PRIORITY_LABEL) || title.match(PRIORITY_INLINE);
+  if (hit) {
+    priority = hit[1].trim();
+    title    = title.replace(hit[0], '').replace(/\.$/, '').trim();
+  }
+
+  requirements.push({ id: m[1].trim(), title, priority });
 }
 
 if (requirements.length === 0) {
