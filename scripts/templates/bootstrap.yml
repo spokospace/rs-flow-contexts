@@ -1,14 +1,20 @@
 name: Bootstrap issues
 
 # Reads context/foundation/discovery-notes.md and creates GitHub Issues
-# for every Functional Requirement (FR-XXX), then creates a feature branch
-# for each issue. Safe to re-run — claude-code-action will skip duplicates.
+# for every Functional Requirement (FR-XXX).
+# Uses gh CLI only — no API key required, GITHUB_TOKEN is enough.
+# Safe to re-run — existing issues are skipped automatically.
 
 on:
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run — print what would be created, no issues created"
+        type: boolean
+        default: true
 
 permissions:
-  contents: write
+  contents: read
   issues: write
 
 jobs:
@@ -19,21 +25,18 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: anthropics/claude-code-action@v1
+      - uses: actions/setup-node@v4
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          allowed_tools: "Bash,Read,Glob"
-          prompt: |
-            Read the file `context/foundation/discovery-notes.md`.
+          node-version: "20"
 
-            For every Functional Requirement listed (lines matching `- FR-XXX:`):
-            1. Create a GitHub Issue using `gh issue create` with:
-               - title: "[FR-XXX] <short requirement title>"
-               - body: the requirement description + priority from the spec
-               - label: "enhancement" (create it if it doesn't exist)
-            2. After creating the issue, get its number and create a branch:
-               `git checkout -b feature/FR-XXX && git push origin feature/FR-XXX`
+      - name: Fetch issue creation script
+        run: |
+          curl -fsSL \
+            "https://raw.githubusercontent.com/spokospace/rs-flow-contexts/main/scripts/create-issues-from-spec.mjs" \
+            -o create-issues-from-spec.mjs
 
-            Use the project glossary for consistent terminology.
-            Do not create duplicate issues — check existing ones first with `gh issue list`.
-            After finishing, print a summary table of created issues and branches.
+      - name: Create issues from spec
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: node create-issues-from-spec.mjs context/foundation/discovery-notes.md
