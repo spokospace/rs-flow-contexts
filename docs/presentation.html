@@ -297,6 +297,50 @@ topics: [rs-flow, discovery, greenfield, web-app]
       Routines → use for monitoring / daily digest tasks
     </div>
   </div>
+  <p class="sources">
+    Azure VM limitation sources:
+    <a href="https://code.claude.com/docs/en/headless-mode">Claude Code Headless Mode — OAuth requires browser, API key required for unattended runs</a> ·
+    <a href="https://github.com/anthropics/claude-code/issues/44267">GitHub #44267: OAuth token expires in CI</a> ·
+    <a href="https://github.com/anthropics/claude-code/issues/33897">GitHub #33897: OAuth hangs without browser</a>
+  </p>
+</section>
+
+<!-- 10. SCHEDULING OPTIONS COMPARISON -->
+<section>
+  <h2>Scheduling options — comparison</h2>
+  <p style="font-size:0.7em;color:#aaa">Cloud Routines vs Desktop cron vs <code>/loop</code></p>
+  <div style="font-size:0.58em">
+    <table>
+      <thead>
+        <tr>
+          <th></th>
+          <th>Cloud<br><small>(Routines)</small></th>
+          <th>Desktop<br><small>(cron)</small></th>
+          <th><code>/loop</code></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Runs on</td><td>Anthropic cloud</td><td>Your machine</td><td>Your machine</td></tr>
+        <tr><td>Requires machine on</td><td class="ok">No</td><td class="warn">Yes</td><td class="warn">Yes</td></tr>
+        <tr><td>Requires open session</td><td class="ok">No</td><td class="ok">No</td><td class="warn">Yes</td></tr>
+        <tr><td>Persistent across restarts</td><td class="ok">Yes</td><td class="ok">Yes</td><td class="warn">--resume only</td></tr>
+        <tr><td>Access to local files</td><td class="bad">No (fresh clone)</td><td class="ok">Yes</td><td class="ok">Yes</td></tr>
+        <tr><td>Permission prompts</td><td class="ok">No (autonomous)</td><td class="warn">Configurable</td><td class="warn">Inherits from session</td></tr>
+        <tr style="background:#2a2000">
+          <td><strong>Minimum interval</strong></td>
+          <td class="bad"><strong>1 hour</strong></td>
+          <td class="ok"><strong>1 minute</strong></td>
+          <td class="ok"><strong>1 minute</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="font-size:0.6em;margin-top:0.8em">
+    <strong>Key constraint:</strong> Routines cannot run more than once per hour — use GitHub Actions or <code>/loop</code> for tighter automation cadence.
+  </p>
+  <p class="sources">
+    Source: <a href="https://code.claude.com/docs/en/scheduled-tasks#compare-scheduling-options">Claude Code Docs — Compare scheduling options</a>
+  </p>
 </section>
 
 <!-- 11. WHAT WE GAIN -->
