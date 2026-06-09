@@ -15,9 +15,13 @@ on:
   workflow_dispatch:
     inputs:
       spec_file:
-        description: "Ścieżka do discovery-notes.md (względem root tego repo)"
-        required: true
-        default: "2026-06-05-meniu-qr-self-funded-startup/context/foundation/discovery-notes.md"
+        description: "Wybierz plik discovery-notes.md"
+        type: choice
+        # Dodaj nowy wpis tutaj gdy pojawi się kolejny klient.
+        options:
+          - 2026-06-05-meniu-qr-self-funded-startup/context/foundation/discovery-notes.md
+          - context/discovery/discovery-notes.md
+          - piekarnia/discovery/discovery-notes.md
       target_repo:
         description: "Docelowe repo dla issues (owner/name). Puste = to repo."
         type: string
