@@ -245,37 +245,44 @@ topics: [rs-flow, discovery, greenfield, web-app]
 <!-- 9. RUNNING SKILLS AUTOMATICALLY -->
 <section>
   <h2>Running skills automatically</h2>
-  <p style="font-size:0.7em;color:#aaa">e.g. <code>/rs-roadmap</code> → issues, without a human at the keyboard</p>
-  <div style="font-size:0.58em">
+  <p class="subtitle">e.g. <code>/rs-roadmap</code> → roadmap.md → issues, without a human at the keyboard</p>
+  <div style="font-size:0.56em">
     <table>
       <thead>
-        <tr><th>Approach</th><th>How</th><th>Auth</th><th>Runs/day</th><th>Cost</th></tr>
+        <tr><th>Approach</th><th>How</th><th>Auth</th><th>Interval / limit</th><th>Cost</th></tr>
       </thead>
       <tbody>
         <tr>
           <td><strong>GitHub Actions<br><code>claude -p</code></strong></td>
           <td>Headless CLI, event-driven or scheduled</td>
-          <td class="ok">API key</td>
+          <td class="warn">API key required</td>
           <td class="ok">Unlimited</td>
-          <td class="ok">~$0.05/run</td>
+          <td class="ok">~$0.10–0.30/run</td>
         </tr>
         <tr>
           <td><strong>n8n</strong></td>
           <td>Call Claude API with skill prompt as system message</td>
-          <td class="ok">API key</td>
+          <td class="warn">API key required</td>
           <td class="ok">Unlimited</td>
-          <td class="ok">~$0.05/run</td>
+          <td class="ok">~$0.10–0.30/run</td>
         </tr>
         <tr>
-          <td><strong>Claude Routines</strong></td>
-          <td>Scheduled remote Claude Code agent (cron)</td>
-          <td class="warn">Subscription</td>
-          <td class="warn">5–25/day, ≥1h interval</td>
+          <td><strong>Cloud Routines</strong><br><span class="label">✅ subscription</span></td>
+          <td>Anthropic cloud — no machine needed, API/schedule trigger, watch live</td>
+          <td class="ok">Subscription</td>
+          <td class="warn">≥1h · 5–25/day</td>
+          <td class="ok">Included</td>
+        </tr>
+        <tr>
+          <td><strong>Desktop Routines</strong><br><small style="color:#aaa">machine must be on</small></td>
+          <td>Claude Desktop app runs skill locally — good for testing Cloud setup</td>
+          <td class="ok">Subscription</td>
+          <td class="ok">≥1min · no daily limit</td>
           <td class="ok">Included</td>
         </tr>
         <tr style="opacity:0.6">
           <td><strong>Azure VM + session</strong><br><span class="label" style="background:#e05252;white-space:nowrap">❌ not recommended</span></td>
-          <td>Logged-in Claude CLI — OAuth token expires, requires manual re-login, single point of failure</td>
+          <td>OAuth token expires, requires manual re-login, single point of failure</td>
           <td class="bad">OAuth (expires)</td>
           <td class="ok">Unlimited*</td>
           <td class="bad">VM cost + fragile</td>
@@ -285,16 +292,16 @@ topics: [rs-flow, discovery, greenfield, web-app]
   </div>
   <div class="two-col" style="margin-top:0.8em;font-size:0.62em">
     <div class="card">
-      <h4>Optimizing Routines</h4>
-      One Routine = one run counted.<br>
-      Batch <code>/rs-roadmap</code> + <code>/rs-prd</code> into a single Routine.<br>
-      Schedule during off-hours → 25 runs/day covers ~3 projects/hour.
+      <h4>Subscription only (no API key)</h4>
+      Test → Desktop Routine (machine on, 1min interval)<br>
+      Remote → Cloud Routine (Anthropic cloud, API trigger)<br>
+      Chain: <code>/rs-roadmap</code> → commit → trigger <code>create-issues</code>
     </div>
     <div class="card">
-      <h4>Recommended split</h4>
-      Local dev → subscription (free)<br>
-      Automation → API key (~$2/month for 40 runs)<br>
-      Routines → use for monitoring / daily digest tasks
+      <h4>With API key</h4>
+      GitHub Actions — unlimited runs, event-driven<br>
+      n8n — visual workflow, easy chaining<br>
+      Routines — keep for daily digest / monitoring tasks
     </div>
   </div>
   <p class="sources">
