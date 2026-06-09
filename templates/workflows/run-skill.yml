@@ -44,4 +44,10 @@ jobs:
           prompt: |
             Read .claude/skills/${{ inputs.skill }}/SKILL.md and follow its instructions exactly.
             Main context file for this run: ${{ inputs.context_file }}
-            Commit any output files and open a pull request with the results.
+
+            This is a headless run — there is no human at the keyboard.
+            Wherever the skill would normally call AskUserQuestion, make the best
+            autonomous decision based on the existing context files in this repo.
+            Do not pause or wait for input.
+
+            When done, commit any new or modified files and open a pull request.
