@@ -1,0 +1,47 @@
+name: Run skill
+
+# Triggers a Claude Code skill in this repository.
+# Requires ANTHROPIC_API_KEY secret (org-level or repo-level).
+#
+# Usage:
+#   Actions → "Run skill" → Run workflow
+#   skill        — which skill to run
+#   context_file — path to the main context file (relative to repo root)
+
+on:
+  workflow_dispatch:
+    inputs:
+      skill:
+        description: "Skill to run"
+        type: choice
+        options:
+          - rs-roadmap
+          - rs-prd
+          - rs-shape
+          - rs-plan
+          - rs-implement
+          - rs-impl_review
+      context_file:
+        description: "Context file (relative to repo root)"
+        type: string
+        default: "context/foundation/discovery-notes.md"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Read .claude/skills/${{ inputs.skill }}/SKILL.md and follow its instructions exactly.
+            Main context file for this run: ${{ inputs.context_file }}
+            Commit any output files and open a pull request with the results.

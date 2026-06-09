@@ -17,7 +17,7 @@
 //     [--description "..."] [--visibility private|public|internal]
 //     [--context-path <dir>] [--topics "a,b,c"] [--dry-run]
 
-import { readdirSync, readFileSync, appendFileSync, rmSync, cpSync, existsSync } from 'node:fs';
+import { readdirSync, readFileSync, appendFileSync, rmSync, cpSync, existsSync, mkdirSync } from 'node:fs';
 import { join, basename } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
@@ -106,8 +106,17 @@ function initRepo(fullName, contextPath) {
       }
     }
 
+    const workflowTemplates = join(process.cwd(), 'templates', 'workflows');
+    if (existsSync(workflowTemplates)) {
+      mkdirSync(join(tmpDir, '.github', 'workflows'), { recursive: true });
+      cpSync(workflowTemplates, join(tmpDir, '.github', 'workflows'), { recursive: true });
+      console.log(`  → workflows copied from templates/workflows/`);
+    }
+
+    const commitMsg = [contextPath && 'context', existsSync(workflowTemplates) && 'workflows']
+      .filter(Boolean).join(' + ');
     git(['add', '.'], tmpDir);
-    git(['commit', '--quiet', '-m', contextPath ? 'chore: init — rs-skills + context' : 'chore: init — rs-skills'], tmpDir);
+    git(['commit', '--quiet', '-m', commitMsg ? `chore: init — rs-skills + ${commitMsg}` : 'chore: init — rs-skills'], tmpDir);
     git(['push', '--quiet'], tmpDir);
     console.log(`  → pushed`);
   } finally {
