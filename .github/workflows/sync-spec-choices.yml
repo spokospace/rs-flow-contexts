@@ -1,0 +1,32 @@
+name: Sync spec file choices
+
+# Automatycznie aktualizuje listę dropdown w create-issues.yml
+# gdy w repo pojawi się nowy lub zmieniony plik discovery-notes.md.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**/discovery-notes.md'
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sync options
+        run: node scripts/sync-spec-choices.mjs
+
+      - name: Commit if changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git diff --quiet .github/workflows/create-issues.yml || (
+            git add .github/workflows/create-issues.yml &&
+            git commit -m "chore: sync spec file choices in create-issues workflow"
+          )
+          git push
