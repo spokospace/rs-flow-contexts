@@ -30,7 +30,13 @@ if (files.length === 0) {
 }
 
 const workflowPath = join(root, WORKFLOW);
-const yaml = readFileSync(workflowPath, 'utf8');
+let yaml;
+try {
+  yaml = readFileSync(workflowPath, 'utf8');
+} catch {
+  console.error(`Nie znaleziono ${WORKFLOW} — uruchom skrypt z katalogu głównego repo.`);
+  process.exit(1);
+}
 
 const optionsBlock = files.map(f => `          - ${f}`).join('\n');
 const updated = yaml.replace(
