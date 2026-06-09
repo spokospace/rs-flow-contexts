@@ -41,10 +41,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-
       - name: Create issues from spec
         env:
           # Dla zewnętrznych repo: CLIENT_REPO_TOKEN lub ORG_REPO_TOKEN (PAT z prawem issues:write).
@@ -52,4 +48,5 @@ jobs:
           GH_TOKEN: ${{ secrets.CLIENT_REPO_TOKEN || secrets.ORG_REPO_TOKEN || secrets.GITHUB_TOKEN }}
           REPO: ${{ inputs.target_repo }}
           DRY_RUN: ${{ inputs.dry_run }}
-        run: node scripts/create-issues-from-spec.mjs "${{ inputs.spec_file }}"
+          SPEC_FILE: ${{ inputs.spec_file }}
+        run: node scripts/create-issues-from-spec.mjs "$SPEC_FILE"
