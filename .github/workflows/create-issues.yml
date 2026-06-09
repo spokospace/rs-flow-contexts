@@ -1,33 +1,32 @@
 name: Create issues from spec
 
-# Tworzy GitHub Issues z pliku discovery-notes.md.
-# Bezpieczne do wielokrotnego uruchamiania — istniejące issues są pomijane.
+# Creates GitHub Issues from a discovery-notes.md file.
+# Safe to re-run — existing issues are skipped.
 #
-# Jak używać:
-#   1. Przejdź do zakładki Actions → "Create issues from spec" → Run workflow
-#   2. spec_file   — ścieżka do discovery-notes.md w tym repo
-#                    (np. 2026-06-05-meniu-qr-self-funded-startup/context/foundation/discovery-notes.md)
-#   3. target_repo — repo docelowe (owner/name), np. spokospace/meniu-qr
-#                    Zostaw puste, aby tworzyć issues w tym repo.
-#   4. dry_run     — true = podgląd, false = twórz naprawdę
+# Usage:
+#   1. Actions → "Create issues from spec" → Run workflow
+#   2. spec_file   — path to discovery-notes.md in this repo
+#   3. target_repo — target repo (owner/name), e.g. spokospace/meniu-qr
+#                    Leave empty to create issues in this repo.
+#   4. dry_run     — true = preview only, false = create for real
 
 on:
   workflow_dispatch:
     inputs:
       spec_file:
-        description: "Wybierz plik discovery-notes.md"
+        description: "Select discovery-notes.md file"
         type: choice
-        # Dodaj nowy wpis tutaj gdy pojawi się kolejny klient.
+        # Add a new entry here when a new client folder is created.
         options:
           - 2026-06-05-meniu-qr-self-funded-startup/context/foundation/discovery-notes.md
           - context/discovery/discovery-notes.md
           - piekarnia/discovery/discovery-notes.md
       target_repo:
-        description: "Docelowe repo dla issues (owner/name). Puste = to repo."
+        description: "Target repo for issues (owner/name). Leave empty for this repo."
         type: string
         default: ""
       dry_run:
-        description: "Dry run — tylko podgląd, bez tworzenia issues"
+        description: "Dry run — preview only, no issues created"
         type: boolean
         default: false
 
@@ -47,8 +46,8 @@ jobs:
 
       - name: Create issues from spec
         env:
-          # Dla zewnętrznych repo: CLIENT_REPO_TOKEN lub ORG_REPO_TOKEN (PAT z prawem issues:write).
-          # Dla tego repo: GITHUB_TOKEN wystarczy.
+          # External repos: CLIENT_REPO_TOKEN or ORG_REPO_TOKEN (PAT with issues:write).
+          # This repo: GITHUB_TOKEN is sufficient.
           GH_TOKEN: ${{ secrets.CLIENT_REPO_TOKEN || secrets.ORG_REPO_TOKEN || secrets.GITHUB_TOKEN }}
           REPO: ${{ inputs.target_repo }}
           DRY_RUN: ${{ inputs.dry_run }}
