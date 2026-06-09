@@ -107,13 +107,14 @@ function initRepo(fullName, contextPath) {
     }
 
     const workflowTemplates = join(process.cwd(), 'templates', 'workflows');
-    if (existsSync(workflowTemplates)) {
+    const hasWorkflowTemplates = existsSync(workflowTemplates);
+    if (hasWorkflowTemplates) {
       mkdirSync(join(tmpDir, '.github', 'workflows'), { recursive: true });
       cpSync(workflowTemplates, join(tmpDir, '.github', 'workflows'), { recursive: true });
       console.log(`  → workflows copied from templates/workflows/`);
     }
 
-    const commitMsg = [contextPath && 'context', existsSync(workflowTemplates) && 'workflows']
+    const commitMsg = [contextPath && 'context', hasWorkflowTemplates && 'workflows']
       .filter(Boolean).join(' + ');
     git(['add', '.'], tmpDir);
     git(['commit', '--quiet', '-m', commitMsg ? `chore: init — rs-skills + ${commitMsg}` : 'chore: init — rs-skills'], tmpDir);
